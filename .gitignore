@@ -1,0 +1,30 @@
+# Entorno virtual
+.venv/
+venv/
+
+# Archivos de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+
+# Configuración de IDEs
+.vscode/
+.idea/
+*.code-workspace
+
+# Archivos de sistema macOS
+.DS_Store
+
+# Archivos de Jupyter (por si acaso)
+.ipynb_checkpoints/
+
+# Archivos de logs
+*.log
+
+# Datos descargados (si NO quieres subirlos)
+data/*.csv
+
+# Resultados de optimización
+opt_*.csv
