@@ -15,13 +15,15 @@ LIMIT_CANDLES: int = 5000    # más velas para tener más operaciones
 
 # Configuración de la estrategia MA + RSI
 MA_RSI_CONFIG = MovingAverageRSIStrategyConfig(
-    fast_window=10,      # un poco más rápidas
-    slow_window=30,
-    rsi_window=14,
-    rsi_overbought=80.0, # filtro mucho más laxo
-    rsi_oversold=20.0,
-    use_rsi_filter=False,   # desactivamos filtro RSI por ahora
-    signal_mode="trend",    # usar modo tendencia
+    fast_window=10,
+    slow_window=25,
+    rsi_window=10,
+    rsi_overbought=70.0,
+    rsi_oversold=30.0,
+    use_rsi_filter=False,
+    signal_mode="cross",
+    use_trend_filter=True,
+    trend_ma_window=200,
 )
 
 
@@ -34,13 +36,10 @@ RISK_CONFIG = RiskManagementConfig(
 # Configuración del backtest
 BACKTEST_CONFIG = BacktestConfig(
     initial_capital=1000.0,
-    sl_pct=0.005,    # 0.5% de stop
-    tp_rr=2.0,       # TP a 1:2
+    sl_pct=0.005,     # 0.5%
+    tp_rr=3.0,        # 1:3
     fee_pct=0.0005,
     allow_short=True,
-    atr_window=None,      # por defecto no exigimos ATR
-    atr_mult_sl=None,     # None => SL fijo
-    atr_mult_tp=None,     # None => TP fijo
 )
 
 

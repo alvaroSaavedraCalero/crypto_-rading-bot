@@ -38,8 +38,7 @@ def main():
     )
     print(f"Filas obtenidas: {len(df)}")
 
-    # Añadimos ATR una vez para todas las estrategias que lo necesiten
-    # Si algún backtest_config usa atr_mult_* -> aseguramos 'atr' y un window razonable
+    # Añadimos ATR una vez (para las estrategias que lo necesiten)
     atr_window_default = 14
     df_with_atr = add_atr(df, window=atr_window_default)
 
@@ -47,28 +46,24 @@ def main():
     # 1) CONFIGS OPTIMIZADOS
     # ============================
 
-    # --- MA_RSI: parámetros de optimización (SL fijo) ---
+    # --- MA_RSI: parámetros óptimos encontrados ---
     ma_rsi_config = MovingAverageRSIStrategyConfig(
         fast_window=10,
-        slow_window=20,
+        slow_window=25,
         rsi_window=10,
         rsi_overbought=70.0,
         rsi_oversold=30.0,
         use_rsi_filter=False,
         signal_mode="cross",
-    )
-    ma_rsi_bt_config = BacktestConfig(
-        initial_capital=run_cfg.backtest_config.initial_capital,
-        sl_pct=0.01,    # 1% stop
-        tp_rr=3.0,      # TP a 1:3
-        fee_pct=run_cfg.backtest_config.fee_pct,
-        allow_short=True,
-        atr_window=None,
-        atr_mult_sl=None,
-        atr_mult_tp=None,
+        use_trend_filter=True,
+        trend_ma_window=200,
     )
 
-    # --- RSI_Reversion: parámetros de optimización (ATR) ---
+    # IMPORTANTE: aquí usamos directamente BACKTEST_CONFIG del settings
+    # que ya tiene sl_pct=0.005 y tp_rr=3.0
+    ma_rsi_bt_config = run_cfg.backtest_config
+
+    # --- RSI_Reversion: sigue con ATR ---
     rsi_rev_config = RSIReversionStrategyConfig(
         rsi_window=21,
         rsi_overbought=65,
@@ -77,7 +72,7 @@ def main():
     )
     rsi_rev_bt_config = BacktestConfig(
         initial_capital=run_cfg.backtest_config.initial_capital,
-        sl_pct=None,            # desactivamos SL fijo
+        sl_pct=None,
         tp_rr=None,
         fee_pct=run_cfg.backtest_config.fee_pct,
         allow_short=True,
@@ -86,7 +81,7 @@ def main():
         atr_mult_tp=1.5,
     )
 
-    # --- Donchian_Breakout: parámetros de optimización (ATR) ---
+    # --- Donchian_Breakout: sigue con ATR ---
     donchian_config = DonchianBreakoutStrategyConfig(
         channel_window=10,
         allow_short=False,
@@ -145,7 +140,6 @@ def main():
             f"atr_mult_sl={bt_cfg.atr_mult_sl}, atr_mult_tp={bt_cfg.atr_mult_tp}"
         )
 
-        # Seleccionamos el DataFrame adecuado (con o sin ATR)
         df_input = df_with_atr if use_atr else df
 
         df_signals = strat.generate_signals(df_input)

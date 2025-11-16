@@ -1,32 +1,39 @@
 # strategies/ma_rsi_strategy.py
 
 from dataclasses import dataclass
+from typing import Literal
 
+import numpy as np
 import pandas as pd
-import ta  # librería 'ta' para indicadores técnicos
+import ta
 
 from strategies.base import BaseStrategy
 
 
+SignalMode = Literal["cross", "trend"]
+
+
 @dataclass
 class MovingAverageRSIStrategyConfig:
-    """
-    Configuración de la estrategia MA + RSI.
-    """
-    fast_window: int = 20        # periodos SMA rápida
-    slow_window: int = 50        # periodos SMA lenta
-    rsi_window: int = 14         # periodos RSI
-    rsi_overbought: float = 70.0 # umbral de sobrecompra
-    rsi_oversold: float = 30.0   # umbral de sobreventa
+    fast_window: int = 10
+    slow_window: int = 20
+    rsi_window: int = 14
+    rsi_overbought: float = 70.0
+    rsi_oversold: float = 30.0
+    use_rsi_filter: bool = False
+    signal_mode: SignalMode = "cross"  # "cross" o "trend"
 
-    # parámetros extra
-    use_rsi_filter: bool = True        # si False, se ignora el filtro RSI
-    signal_mode: str = "cross"         # "cross" = cruces, "trend" = estado de tendencia
+    # NUEVOS campos de filtro de tendencia
+    use_trend_filter: bool = False
+    trend_ma_window: int = 200  # MA larga para definir tendencia
 
 
 class MovingAverageRSIStrategy(BaseStrategy):
     """
-    Estrategia basada en medias móviles + RSI.
+    Estrategia basada en:
+    - Cruce de medias móviles (fast/slow)
+    - Opcional filtro RSI
+    - Opcional filtro de tendencia con MA larga
     """
 
     name: str = "MA_RSI"
@@ -40,75 +47,79 @@ class MovingAverageRSIStrategy(BaseStrategy):
             missing = required_cols - set(df.columns)
             raise ValueError(f"Faltan columnas necesarias en el DataFrame: {missing}")
 
+        c = self.config
         data = df.copy()
 
-        # Medias móviles simples
-        data["sma_fast"] = (
-            data["close"]
-                .rolling(window=self.config.fast_window, min_periods=self.config.fast_window)
-                .mean()
-        )
-        data["sma_slow"] = (
-            data["close"]
-                .rolling(window=self.config.slow_window, min_periods=self.config.slow_window)
-                .mean()
-        )
+        # ============================
+        # 1) Medias móviles
+        # ============================
+        data["fast_ma"] = data["close"].rolling(window=c.fast_window, min_periods=c.fast_window).mean()
+        data["slow_ma"] = data["close"].rolling(window=c.slow_window, min_periods=c.slow_window).mean()
 
-        # RSI
-        rsi_indicator = ta.momentum.RSIIndicator(
-            close=data["close"],
-            window=self.config.rsi_window,
-        )
-        data["rsi"] = rsi_indicator.rsi()
-
-        # Señales inicializadas a 0
+        # ============================
+        # 2) Señal básica (sin filtros)
+        # ============================
         data["signal"] = 0
 
-        sma_fast = data["sma_fast"]
-        sma_slow = data["sma_slow"]
-        rsi = data["rsi"]
+        if c.signal_mode == "trend":
+            # Señal continua según relación fast/slow
+            data.loc[data["fast_ma"] > data["slow_ma"], "signal"] = 1
+            data.loc[data["fast_ma"] < data["slow_ma"], "signal"] = -1
 
-        valid_mask = sma_fast.notna() & sma_slow.notna() & rsi.notna()
+        elif c.signal_mode == "cross":
+            # Señal solo cuando hay cruce
+            prev_fast = data["fast_ma"].shift(1)
+            prev_slow = data["slow_ma"].shift(1)
 
-        if self.config.signal_mode == "cross":
-            sma_fast_prev = sma_fast.shift(1)
-            sma_slow_prev = sma_slow.shift(1)
+            cross_up = (prev_fast <= prev_slow) & (data["fast_ma"] > data["slow_ma"])
+            cross_down = (prev_fast >= prev_slow) & (data["fast_ma"] < data["slow_ma"])
 
-            cross_up = (sma_fast > sma_slow) & (sma_fast_prev <= sma_slow_prev)
-            cross_down = (sma_fast < sma_slow) & (sma_fast_prev >= sma_slow_prev)
-
-            if self.config.use_rsi_filter:
-                rsi_ok = (rsi > self.config.rsi_oversold) & (rsi < self.config.rsi_overbought)
-                cross_up = cross_up & rsi_ok
-                cross_down = cross_down & rsi_ok
-
-            data.loc[valid_mask & cross_up, "signal"] = 1
-            data.loc[valid_mask & cross_down, "signal"] = -1
-
-        elif self.config.signal_mode == "trend":
-            trend_long = sma_fast > sma_slow
-            trend_short = sma_fast < sma_slow
-
-            if self.config.use_rsi_filter:
-                rsi_ok = (rsi > self.config.rsi_oversold) & (rsi < self.config.rsi_overbought)
-                trend_long = trend_long & rsi_ok
-                trend_short = trend_short & rsi_ok
-
-            raw_signal = pd.Series(0, index=data.index, dtype="int64")
-            raw_signal[trend_long] = 1
-            raw_signal[trend_short] = -1
-
-            signal = pd.Series(0, index=data.index, dtype="int64")
-            prev = 0
-            for i in range(len(raw_signal)):
-                s = raw_signal.iloc[i]
-                if s != 0 and s != prev:
-                    signal.iloc[i] = s
-                    prev = s
-
-            data["signal"] = signal
+            data.loc[cross_up, "signal"] = 1
+            data.loc[cross_down, "signal"] = -1
 
         else:
-            raise ValueError(f"Modo de señal no soportado: {self.config.signal_mode}")
+            raise ValueError(f"signal_mode no soportado: {c.signal_mode}")
+
+        # ============================
+        # 3) Filtro RSI opcional
+        # ============================
+        if c.use_rsi_filter:
+            rsi_ind = ta.momentum.RSIIndicator(close=data["close"], window=c.rsi_window)
+            data["rsi"] = rsi_ind.rsi()
+
+            # Ejemplo de lógica:
+            # - Para largos: evitamos sobrecompra extrema
+            # - Para cortos: evitamos sobreventa extrema
+            long_mask = data["signal"] == 1
+            short_mask = data["signal"] == -1
+
+            data.loc[long_mask & (data["rsi"] > c.rsi_overbought), "signal"] = 0
+            data.loc[short_mask & (data["rsi"] < c.rsi_oversold), "signal"] = 0
+
+        # ============================
+        # 4) Filtro de tendencia opcional
+        # ============================
+        if c.use_trend_filter:
+            data["trend_ma"] = data["close"].rolling(
+                window=c.trend_ma_window,
+                min_periods=c.trend_ma_window,
+            ).mean()
+
+            # Solo consideramos señales donde la MA de tendencia no es NaN
+            valid_trend = data["trend_ma"].notna()
+
+            # Definimos tendencia: arriba si close > trend_ma, abajo si close < trend_ma
+            up_trend = valid_trend & (data["close"] > data["trend_ma"])
+            down_trend = valid_trend & (data["close"] < data["trend_ma"])
+
+            # Anulamos largos en tendencia bajista
+            data.loc[(data["signal"] == 1) & ~up_trend, "signal"] = 0
+
+            # Anulamos cortos en tendencia alcista
+            data.loc[(data["signal"] == -1) & ~down_trend, "signal"] = 0
+
+        # Opcional: poner a 0 las señales donde no haya fast/slow MA válidas
+        valid_ma = data["fast_ma"].notna() & data["slow_ma"].notna()
+        data.loc[~valid_ma, "signal"] = 0
 
         return data

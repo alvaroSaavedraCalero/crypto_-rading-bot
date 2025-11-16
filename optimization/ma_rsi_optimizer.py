@@ -18,45 +18,59 @@ def run_ma_rsi_grid_search(
     df: pd.DataFrame,
     fast_windows: Iterable[int],
     slow_windows: Iterable[int],
-    rsi_windows: Iterable[int],
+    signal_modes: Iterable[str],
+    use_trend_filter_options: Iterable[bool],
+    trend_ma_windows: Iterable[int],
     sl_pcts: Iterable[float],
     tp_rrs: Iterable[float],
     base_backtest_config: BacktestConfig,
     base_risk_config: RiskManagementConfig,
-    min_trades: int = 5,
-    signal_modes: Iterable[str] = ("cross", "trend"),
-    use_rsi_filter_options: Iterable[bool] = (False, True),
+    min_trades: int = 20,
 ) -> pd.DataFrame:
     """
-    Ejecuta una búsqueda por grid para la estrategia MA+RSI.
-    """
-    results_rows = []
+    Grid search para la estrategia MA_RSI con filtro de tendencia opcional.
 
-    for fast, slow, rsi_win, sl_pct, tp_rr, signal_mode, use_rsi_filter in product(
-        fast_windows, slow_windows, rsi_windows, sl_pcts, tp_rrs, signal_modes, use_rsi_filter_options
+    df: DataFrame OHLCV con columnas: timestamp, open, high, low, close, volume
+    """
+    rows: list[dict] = []
+
+    for fast, slow, signal_mode, use_trend_filter, trend_win, sl_pct, tp_rr in product(
+        fast_windows,
+        slow_windows,
+        signal_modes,
+        use_trend_filter_options,
+        trend_ma_windows,
+        sl_pcts,
+        tp_rrs,
     ):
-        # Evitar combinaciones poco lógicas
+        # descartamos combinaciones poco lógicas
         if fast >= slow:
             continue
 
-        # Configuración de estrategia
+        # Config estrategia
         strat_cfg = MovingAverageRSIStrategyConfig(
             fast_window=fast,
             slow_window=slow,
-            rsi_window=rsi_win,
+            rsi_window=10,          # puedes parametrizarlo después si quieres
             rsi_overbought=70.0,
             rsi_oversold=30.0,
-            use_rsi_filter=use_rsi_filter,
+            use_rsi_filter=False,   # de momento desactivado
             signal_mode=signal_mode,
+            use_trend_filter=use_trend_filter,
+            trend_ma_window=trend_win,
         )
-
         strategy = MovingAverageRSIStrategy(config=strat_cfg)
 
-        # Generar señales
         df_signals = strategy.generate_signals(df)
 
-        # Configuración de backtest adaptando SL/TP
-        bt_cfg = replace(base_backtest_config, sl_pct=sl_pct, tp_rr=tp_rr)
+        # Config backtest (adaptamos sl_pct y tp_rr)
+        bt_cfg = replace(
+            base_backtest_config,
+            sl_pct=sl_pct,
+            tp_rr=tp_rr,
+            atr_mult_sl=None,
+            atr_mult_tp=None,
+        )
 
         backtester = Backtester(
             backtest_config=bt_cfg,
@@ -65,19 +79,18 @@ def run_ma_rsi_grid_search(
 
         result = backtester.run(df_signals)
 
-        # Filtramos combinaciones con muy pocos trades
         if result.num_trades < min_trades:
             continue
 
-        results_rows.append(
+        rows.append(
             {
                 "fast_window": fast,
                 "slow_window": slow,
-                "rsi_window": rsi_win,
+                "signal_mode": signal_mode,
+                "use_trend_filter": use_trend_filter,
+                "trend_ma_window": trend_win,
                 "sl_pct": sl_pct,
                 "tp_rr": tp_rr,
-                "signal_mode": signal_mode,
-                "use_rsi_filter": use_rsi_filter,
                 "num_trades": result.num_trades,
                 "total_return_pct": result.total_return_pct,
                 "max_drawdown_pct": result.max_drawdown_pct,
@@ -86,11 +99,12 @@ def run_ma_rsi_grid_search(
             }
         )
 
-    if not results_rows:
+    if not rows:
         return pd.DataFrame()
 
-    df_results = pd.DataFrame(results_rows)
+    df_results = pd.DataFrame(rows)
 
+    # Orden: más retorno, mejor PF, menor drawdown
     df_results = df_results.sort_values(
         by=["total_return_pct", "profit_factor", "max_drawdown_pct"],
         ascending=[False, False, True],
