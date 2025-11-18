@@ -8,6 +8,7 @@ import pandas as pd
 import ta
 
 from strategies.base import BaseStrategy
+from .base import BaseStrategy, StrategyMetadata
 
 
 SignalMode = Literal["cross", "trend"]
@@ -28,7 +29,7 @@ class MovingAverageRSIStrategyConfig:
     trend_ma_window: int = 200  # MA larga para definir tendencia
 
 
-class MovingAverageRSIStrategy(BaseStrategy):
+class MovingAverageRSIStrategy(BaseStrategy[MovingAverageRSIStrategyConfig]):
     """
     Estrategia basada en:
     - Cruce de medias móviles (fast/slow)
@@ -38,8 +39,8 @@ class MovingAverageRSIStrategy(BaseStrategy):
 
     name: str = "MA_RSI"
 
-    def __init__(self, config: MovingAverageRSIStrategyConfig | None = None) -> None:
-        self.config = config or MovingAverageRSIStrategyConfig()
+    def __init__(self, config: MovingAverageRSIStrategyConfig, meta: StrategyMetadata | None = None):
+        super().__init__(config=config, meta=meta)
 
     def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
         required_cols = {"timestamp", "open", "high", "low", "close", "volume"}

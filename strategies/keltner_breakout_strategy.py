@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import Literal
 
+from .base import BaseStrategy, StrategyMetadata
+
 import numpy as np
 import pandas as pd
 
@@ -26,7 +28,7 @@ class KeltnerBreakoutStrategyConfig:
     side_mode: Literal["both", "long_only", "short_only"] = "both"
 
 
-class KeltnerBreakoutStrategy:
+class KeltnerBreakoutStrategy(BaseStrategy[KeltnerBreakoutStrategyConfig]):
     """
     Estrategia de breakout de volatilidad basada en:
     - Canal de Keltner (EMA + ATR * mult)
@@ -40,8 +42,8 @@ class KeltnerBreakoutStrategy:
     - Short: análogo con banda inferior (si allow_short=True)
     """
 
-    def __init__(self, config: KeltnerBreakoutStrategyConfig) -> None:
-        self.config = config
+    def __init__(self, config: KeltnerBreakoutStrategyConfig, meta: StrategyMetadata | None = None):
+        super().__init__(config=config, meta=meta)
 
     @staticmethod
     def _ema(series: pd.Series, window: int) -> pd.Series:

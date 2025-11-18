@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import Literal
 
+from .base import BaseStrategy, StrategyMetadata
+
 import numpy as np
 import pandas as pd
 
@@ -25,7 +27,7 @@ class MACDADXTrendStrategyConfig:
     allow_short: bool = True        # permitir cortos o no
 
 
-class MACDADXTrendStrategy:
+class MACDADXTrendStrategy(BaseStrategy[MACDADXTrendStrategyConfig]):
     """
     Estrategia de momentum basada en:
     - Filtro de tendencia con EMA (trend_ema_window)
@@ -33,8 +35,8 @@ class MACDADXTrendStrategy:
     - ADX (tendencia suficientemente fuerte)
     """
 
-    def __init__(self, config: MACDADXTrendStrategyConfig) -> None:
-        self.config = config
+    def __init__(self, config: MACDADXTrendStrategyConfig, meta: StrategyMetadata | None = None):
+        super().__init__(config=config, meta=meta)
 
     # ========================
     # Cálculo de indicadores
