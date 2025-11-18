@@ -18,6 +18,10 @@ from .keltner_breakout_strategy import (
     KeltnerBreakoutStrategyConfig,
 )
 from strategies.archived.bb_trend_strategy import BBTrendStrategy, BBTrendStrategyConfig
+from strategies.squeeze_momentum_strategy import (
+    SqueezeMomentumStrategy,
+    SqueezeMomentumConfig,
+)
 
 # Mapa: tipo_de_estrategia -> (ClaseEstrategia, ClaseConfig)
 # Los strings deben coincidir con los strategy_type que usas en config/settings.py
@@ -26,6 +30,7 @@ STRATEGY_REGISTRY: Dict[str, Tuple[Type[BaseStrategy], Type]] = {
     "MACD_ADX": (MACDADXTrendStrategy, MACDADXTrendStrategyConfig),
     "KELTNER": (KeltnerBreakoutStrategy, KeltnerBreakoutStrategyConfig),
     "BB_TREND": (BBTrendStrategy, BBTrendStrategyConfig),
+    "SQUEEZE": (SqueezeMomentumStrategy, SqueezeMomentumConfig),
 }
 
 

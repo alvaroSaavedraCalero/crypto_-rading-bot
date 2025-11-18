@@ -6,6 +6,7 @@ from backtesting.engine import BacktestConfig
 from strategies.ma_rsi_strategy import MovingAverageRSIStrategyConfig
 from strategies.macd_adx_trend_strategy import MACDADXTrendStrategyConfig
 from strategies.keltner_breakout_strategy import KeltnerBreakoutStrategyConfig
+from strategies.squeeze_momentum_strategy import SqueezeMomentumConfig
 from utils.risk import RiskManagementConfig
 
 
@@ -150,6 +151,10 @@ KELTNER_SOL15M_BT_CONFIG = BacktestConfig(
     atr_mult_tp=None,
 )
 
+# ==========================
+# Estrategia 4: Keltner Breakout (SOL/USDT 15m)
+# ==========================
+
 KELTNER_SOL15M_RUN = StrategyRunConfig(
     name="KELTNER_BREAKOUT_SOLUSDT_15m",
     symbol="SOL/USDT",
@@ -162,6 +167,44 @@ KELTNER_SOL15M_RUN = StrategyRunConfig(
 
 
 # ==========================
+# Estrategia 5: Squeeze Momentum (BNB/USDT 15m)
+# ==========================
+
+SQUEEZE_BNB15M_CONFIG = SqueezeMomentumConfig(
+    bb_window=20,
+    bb_mult=1.8,
+    kc_window=14,
+    kc_mult=2.0,
+    mom_window=10,
+    atr_window=14,
+    atr_min_percentile=0.3,
+    min_squeeze_bars=5,
+    allow_short=True,
+)
+
+SQUEEZE_BNB15M_BT_CONFIG = BacktestConfig(
+    initial_capital=1000.0,
+    sl_pct=0.005,
+    tp_rr=2.0,
+    fee_pct=0.0005,
+    allow_short=True,
+    atr_window=None,
+    atr_mult_sl=None,
+    atr_mult_tp=None,
+)
+
+SQUEEZE_BNB15M_RUN = StrategyRunConfig(
+    name="SQUEEZE_MOMENTUM_OPT_BNBUSDT_15m",
+    symbol="BNB/USDT",
+    timeframe="15m",
+    limit_candles=DEFAULT_LIMIT_CANDLES,
+    strategy_type="SQUEEZE",
+    strategy_config=SQUEEZE_BNB15M_CONFIG,
+    backtest_config=SQUEEZE_BNB15M_BT_CONFIG,
+)
+
+
+# ==========================
 # Registro de estrategias optimizadas
 # (usado por backtest_strategies.py)
 # ==========================
@@ -170,4 +213,5 @@ OPTIMIZED_STRATEGIES = [
     MA_RSI_BTC15M_RUN,
     MACD_ADX_ETH15M_RUN,
     KELTNER_SOL15M_RUN,
+    SQUEEZE_BNB15M_RUN,
 ]
