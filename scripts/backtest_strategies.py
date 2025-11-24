@@ -9,11 +9,7 @@ from config.settings import (
 from data.downloader import get_datos_cripto_cached
 from backtesting.engine import Backtester
 from reporting.summary import print_backtest_summary
-from strategies.ma_rsi_strategy import MovingAverageRSIStrategy
-from strategies.macd_adx_trend_strategy import MACDADXTrendStrategy
-from strategies.keltner_breakout_strategy import KeltnerBreakoutStrategy
-from strategies.archived.bb_trend_strategy import BBTrendStrategy
-from strategies.squeeze_momentum_strategy import SqueezeMomentumStrategy
+from strategies.registry import create_strategy
 
 
 def run_single_strategy(run_cfg):
@@ -34,19 +30,7 @@ def run_single_strategy(run_cfg):
     )
     print(f"Filas obtenidas: {len(df)}")
 
-    # Instanciamos la estrategia según el tipo
-    if run_cfg.strategy_type == "MA_RSI":
-        strategy = MovingAverageRSIStrategy(config=run_cfg.strategy_config)
-    elif run_cfg.strategy_type == "MACD_ADX":
-        strategy = MACDADXTrendStrategy(config=run_cfg.strategy_config)
-    elif run_cfg.strategy_type == "KELTNER":
-        strategy = KeltnerBreakoutStrategy(config=run_cfg.strategy_config)
-    elif run_cfg.strategy_type == "BB_TREND":
-        strategy = BBTrendStrategy(config=run_cfg.strategy_config)
-    elif run_cfg.strategy_type == "SQUEEZE":
-        strategy = SqueezeMomentumStrategy(config=run_cfg.strategy_config)
-    else:
-        raise ValueError(f"Tipo de estrategia no soportado: {run_cfg.strategy_type}")
+    strategy = create_strategy(run_cfg.strategy_type, run_cfg.strategy_config)
 
     df_signals = strategy.generate_signals(df)
 

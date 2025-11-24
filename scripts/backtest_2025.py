@@ -10,13 +10,7 @@ from config.settings import (
 from data.downloader import get_datos_cripto_cached
 from backtesting.engine import Backtester
 from reporting.summary import print_backtest_summary
-from strategies.ma_rsi_strategy import MovingAverageRSIStrategy
-from strategies.macd_adx_trend_strategy import MACDADXTrendStrategy
-from strategies.keltner_breakout_strategy import KeltnerBreakoutStrategy
-from strategies.archived.bb_trend_strategy import BBTrendStrategy
-from strategies.squeeze_momentum_strategy import SqueezeMomentumStrategy
-from strategies.supertrend_strategy import SupertrendStrategy
-from strategies.bollinger_mean_reversion import BollingerMeanReversionStrategy
+from strategies.registry import create_strategy
 
 
 def run_single_strategy_date_range(run_cfg, start_date, end_date):
@@ -50,8 +44,6 @@ def run_single_strategy_date_range(run_cfg, start_date, end_date):
     # Añadir un buffer de seguridad (ej. 20% más o 1000 velas) para indicadores previos
     limit_candles = required_candles + 2000
     
-    print(f"Solicitando {limit_candles} velas para cubrir el rango...")
-
     print(f"Solicitando {limit_candles} velas para cubrir el rango...")
 
     # Primero intentamos cargar lo que haya en caché
@@ -90,23 +82,8 @@ def run_single_strategy_date_range(run_cfg, start_date, end_date):
         print("ADVERTENCIA: No hay datos en el rango de fechas especificado.")
         return None
 
-    # Instanciamos la estrategia según el tipo
-    if run_cfg.strategy_type == "MA_RSI":
-        strategy = MovingAverageRSIStrategy(config=run_cfg.strategy_config)
-    elif run_cfg.strategy_type == "MACD_ADX":
-        strategy = MACDADXTrendStrategy(config=run_cfg.strategy_config)
-    elif run_cfg.strategy_type == "KELTNER":
-        strategy = KeltnerBreakoutStrategy(config=run_cfg.strategy_config)
-    elif run_cfg.strategy_type == "BB_TREND":
-        strategy = BBTrendStrategy(config=run_cfg.strategy_config)
-    elif run_cfg.strategy_type == "SQUEEZE":
-        strategy = SqueezeMomentumStrategy(config=run_cfg.strategy_config)
-    elif run_cfg.strategy_type == "SUPERTREND":
-        strategy = SupertrendStrategy(config=run_cfg.strategy_config)
-    elif run_cfg.strategy_type == "BOLLINGER_MR":
-        strategy = BollingerMeanReversionStrategy(config=run_cfg.strategy_config)
-    else:
-        raise ValueError(f"Tipo de estrategia no soportado: {run_cfg.strategy_type}")
+    # Instanciar estrategia vía registro para soportar todas las disponibles
+    strategy = create_strategy(run_cfg.strategy_type, run_cfg.strategy_config)
 
     df_signals = strategy.generate_signals(df_filtered)
 
@@ -131,9 +108,9 @@ def run_single_strategy_date_range(run_cfg, start_date, end_date):
 
 
 def main():
-    # Definir rango de fechas: 1 de enero de 2025 hasta hoy (24 de noviembre de 2025)
+    # Definir rango de fechas: 1 de enero de 2025 hasta ahora
     start_date = datetime(2025, 1, 1, tzinfo=timezone.utc)
-    end_date = datetime(2025, 11, 24, 23, 59, 59, tzinfo=timezone.utc) # Final del día de hoy
+    end_date = datetime.now(timezone.utc)
 
     rows = []
 
