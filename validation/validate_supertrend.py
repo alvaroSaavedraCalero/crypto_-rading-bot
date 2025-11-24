@@ -56,17 +56,17 @@ def run_supertrend_on_market(
 def main():
     # Valores óptimos obtenidos de optimization/optimize_supertrend.py
     supertrend_cfg = SupertrendStrategyConfig(
-        atr_period=10,
+        atr_period=14,
         atr_multiplier=3.0,
-        use_adx_filter=True,
+        use_adx_filter=False,
         adx_period=14,
         adx_threshold=20.0,
     )
 
     bt_cfg = BacktestConfig(
         initial_capital=1000.0,
-        sl_pct=0.01,     # 1% SL
-        tp_rr=5.0,       # TP 1:5
+        sl_pct=0.02,     # 2% SL (mejor fila)
+        tp_rr=3.0,       # TP 1:3
         fee_pct=0.0005,
         allow_short=True,
     )
@@ -76,8 +76,6 @@ def main():
         ("ETH/USDT", "15m", 10000),
         ("SOL/USDT", "15m", 10000),
         ("BNB/USDT", "15m", 10000),
-        ("BTC/USDT", "1h",  5000),
-        ("ETH/USDT", "1h",  5000),
     ]
 
     rows = []
