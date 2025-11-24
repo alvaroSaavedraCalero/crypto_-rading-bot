@@ -3,10 +3,9 @@
 from dataclasses import dataclass
 
 from backtesting.engine import BacktestConfig
-from strategies.ma_rsi_strategy import MovingAverageRSIStrategyConfig
+
 from strategies.macd_adx_trend_strategy import MACDADXTrendStrategyConfig
-from strategies.keltner_breakout_strategy import KeltnerBreakoutStrategyConfig
-from strategies.squeeze_momentum_strategy import SqueezeMomentumConfig
+
 from utils.risk import RiskManagementConfig
 
 
@@ -50,43 +49,7 @@ class StrategyRunConfig:
     backtest_config: BacktestConfig
 
 
-# ==========================
-# Estrategia 1: MA_RSI (BTC/USDT 15m)
-# ==========================
 
-# Config MA_RSI óptima para BTC/USDT 15m (según tus optimizaciones)
-MA_RSI_BTC15M_CONFIG = MovingAverageRSIStrategyConfig(
-    fast_window=10,
-    slow_window=25,
-    rsi_window=10,
-    rsi_overbought=70.0,
-    rsi_oversold=30.0,
-    use_rsi_filter=False,
-    signal_mode="cross",
-    use_trend_filter=True,
-    trend_ma_window=200,
-)
-
-MA_RSI_BTC15M_BT_CONFIG = BacktestConfig(
-    initial_capital=1000.0,
-    sl_pct=0.005,      # 0.5% (la config que daba ~49% de retorno)
-    tp_rr=3.0,
-    fee_pct=0.0005,
-    allow_short=True,
-    atr_window=None,
-    atr_mult_sl=None,
-    atr_mult_tp=None,
-)
-
-MA_RSI_BTC15M_RUN = StrategyRunConfig(
-    name="MA_RSI_OPT_BTCUSDT_15m",
-    symbol="BTC/USDT",
-    timeframe="15m",
-    limit_candles=DEFAULT_LIMIT_CANDLES,
-    strategy_type="MA_RSI",
-    strategy_config=MA_RSI_BTC15M_CONFIG,
-    backtest_config=MA_RSI_BTC15M_BT_CONFIG,
-)
 
 
 # ==========================
@@ -125,83 +88,7 @@ MACD_ADX_ETH15M_RUN = StrategyRunConfig(
 )
 
 
-# ==========================
-# Estrategia 3: Keltner Breakout (SOL/USDT 15m)
-# ==========================
 
-KELTNER_SOL15M_CONFIG = KeltnerBreakoutStrategyConfig(
-    kc_window=10,
-    kc_mult=1.0,
-    atr_window=20,
-    atr_min_percentile=0.2,   # filtramos el 20% de menor volatilidad
-    use_trend_filter=False,   # según la fila óptima
-    trend_ema_window=100,     # valor de la fila, aunque no se use al desactivar filtro
-    allow_short=True,
-    side_mode="both",
-)
-
-KELTNER_SOL15M_BT_CONFIG = BacktestConfig(
-    initial_capital=1000.0,
-    sl_pct=0.01,     # <-- valor correcto según la fila óptima
-    tp_rr=2.5,       # 1:2.5 (correcto)
-    fee_pct=0.0005,
-    allow_short=True,
-    atr_window=None,
-    atr_mult_sl=None,
-    atr_mult_tp=None,
-)
-
-# ==========================
-# Estrategia 4: Keltner Breakout (SOL/USDT 15m)
-# ==========================
-
-KELTNER_SOL15M_RUN = StrategyRunConfig(
-    name="KELTNER_BREAKOUT_SOLUSDT_15m",
-    symbol="SOL/USDT",
-    timeframe="15m",
-    limit_candles=DEFAULT_LIMIT_CANDLES,
-    strategy_type="KELTNER",
-    strategy_config=KELTNER_SOL15M_CONFIG,
-    backtest_config=KELTNER_SOL15M_BT_CONFIG,
-)
-
-
-# ==========================
-# Estrategia 5: Squeeze Momentum (BNB/USDT 15m)
-# ==========================
-
-SQUEEZE_BNB15M_CONFIG = SqueezeMomentumConfig(
-    bb_window=20,
-    bb_mult=1.8,
-    kc_window=14,
-    kc_mult=2.0,
-    mom_window=10,
-    atr_window=14,
-    atr_min_percentile=0.3,
-    min_squeeze_bars=5,
-    allow_short=True,
-)
-
-SQUEEZE_BNB15M_BT_CONFIG = BacktestConfig(
-    initial_capital=1000.0,
-    sl_pct=0.005,
-    tp_rr=2.0,
-    fee_pct=0.0005,
-    allow_short=True,
-    atr_window=None,
-    atr_mult_sl=None,
-    atr_mult_tp=None,
-)
-
-SQUEEZE_BNB15M_RUN = StrategyRunConfig(
-    name="SQUEEZE_MOMENTUM_OPT_BNBUSDT_15m",
-    symbol="BNB/USDT",
-    timeframe="15m",
-    limit_candles=DEFAULT_LIMIT_CANDLES,
-    strategy_type="SQUEEZE",
-    strategy_config=SQUEEZE_BNB15M_CONFIG,
-    backtest_config=SQUEEZE_BNB15M_BT_CONFIG,
-)
 
 
 # ==========================
@@ -210,8 +97,5 @@ SQUEEZE_BNB15M_RUN = StrategyRunConfig(
 # ==========================
 
 OPTIMIZED_STRATEGIES = [
-    MA_RSI_BTC15M_RUN,
     MACD_ADX_ETH15M_RUN,
-    KELTNER_SOL15M_RUN,
-    SQUEEZE_BNB15M_RUN,
 ]
