@@ -1,4 +1,4 @@
-# optimization/ma_rsi_optimizer.py
+# optimization/optimize_ma_rsi.py
 
 from dataclasses import replace
 from itertools import product
@@ -6,6 +6,8 @@ from typing import Iterable
 
 import pandas as pd
 
+from config.settings import BACKTEST_CONFIG, RISK_CONFIG
+from data.downloader import get_datos_cripto_cached
 from backtesting.engine import Backtester, BacktestConfig
 from strategies.ma_rsi_strategy import (
     MovingAverageRSIStrategy,
@@ -111,3 +113,63 @@ def run_ma_rsi_grid_search(
     ).reset_index(drop=True)
 
     return df_results
+
+
+def main():
+    # ========== CONFIGURATION ==========
+    SYMBOL = "BTC/USDT"
+    TIMEFRAME = "1m"
+    LIMIT = 10000
+    MIN_TRADES = 20
+    # ===================================
+
+    print(f"Optimizing MA_RSI Strategy for {SYMBOL} {TIMEFRAME}...")
+    print(f"Obteniendo datos de {SYMBOL} en timeframe {TIMEFRAME}...")
+    df = get_datos_cripto_cached(
+        symbol=SYMBOL,
+        timeframe=TIMEFRAME,
+        limit=LIMIT,
+        force_download=False,
+    )
+    print(f"Filas obtenidas: {len(df)}")
+
+    # ==============================
+    # Espacio de parámetros
+    # ==============================
+    fast_windows = [5, 10, 20]
+    slow_windows = [50, 100, 200]
+    signal_modes = ["cross", "both"]
+    use_trend_filter_options = [True, False]
+    trend_ma_windows = [200]
+    sl_pcts = [0.01, 0.015, 0.02]
+    tp_rrs = [1.5, 2.0, 2.5]
+
+    df_results = run_ma_rsi_grid_search(
+        df=df,
+        fast_windows=fast_windows,
+        slow_windows=slow_windows,
+        signal_modes=signal_modes,
+        use_trend_filter_options=use_trend_filter_options,
+        trend_ma_windows=trend_ma_windows,
+        sl_pcts=sl_pcts,
+        tp_rrs=tp_rrs,
+        base_backtest_config=BACKTEST_CONFIG,
+        base_risk_config=RISK_CONFIG,
+        min_trades=MIN_TRADES,
+    )
+
+    if df_results.empty:
+        print("MA_RSI: sin resultados.")
+        return
+
+    top_n = 20
+    print(f"\nTop {top_n} MA_RSI {SYMBOL} {TIMEFRAME}:")
+    print(df_results.head(top_n))
+
+    out_path = f"opt_ma_rsi_{SYMBOL.replace('/', '')}_{TIMEFRAME}.csv"
+    df_results.to_csv(out_path, index=False)
+    print(f"\nResultados guardados en {out_path}")
+
+
+if __name__ == "__main__":
+    main()

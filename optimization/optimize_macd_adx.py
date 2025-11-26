@@ -167,7 +167,7 @@ def _build_param_grid(
 def main():
     # Configuración principal
     symbol = "BTC/USDT"  # Puedes cambiar a ETH/USDT, SOL/USDT, etc.
-    timeframe = "15m"
+    timeframe = "1m"
     limit = 10000        # Cantidad de velas para backtest
 
     print(f"Obteniendo datos de {symbol} en timeframe {timeframe}...")

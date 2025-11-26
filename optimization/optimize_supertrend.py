@@ -140,7 +140,7 @@ def _build_param_grid(
 
 def main():
     symbol = "BTC/USDT"
-    timeframe = "15m"
+    timeframe = "1m"
     limit = 50000 # Más datos para capturar tendencias largas
 
     print(f"Obteniendo datos de {symbol} en timeframe {timeframe}...")

@@ -19,7 +19,7 @@ from strategies.squeeze_momentum_strategy import (
 
 # Mercado base
 SYMBOL = "BNB/USDT"
-TIMEFRAME = "15m"
+TIMEFRAME = "1m"
 LIMIT = 5000
 
 # Config de backtest para la optimización

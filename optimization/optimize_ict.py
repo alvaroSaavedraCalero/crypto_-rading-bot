@@ -129,15 +129,19 @@ def _build_param_grid(
 
 
 def main():
-    symbol = "BTC/USDT"
-    timeframe = "15m"
-    limit = 10000
+    # ========== CONFIGURATION ==========
+    SYMBOL = "BTC/USDT"
+    TIMEFRAME = "1m"
+    LIMIT = 10000
+    MIN_TRADES = 30
+    # ===================================
 
-    print(f"Obteniendo datos de {symbol} en timeframe {timeframe}...")
+    print(f"Optimizing ICT Strategy for {SYMBOL} {TIMEFRAME}...")
+    print(f"Obteniendo datos de {SYMBOL} en timeframe {TIMEFRAME}...")
     df = get_datos_cripto_cached(
-        symbol=symbol,
-        timeframe=timeframe,
-        limit=limit,
+        symbol=SYMBOL,
+        timeframe=TIMEFRAME,
+        limit=LIMIT,
         force_download=False,
     )
     print(f"Filas obtenidas: {len(df)}")
@@ -163,7 +167,11 @@ def main():
     sl_pcts = [0.01, 0.015, 0.02]
     tp_rrs = [2.0, 3.0, 4.0] # ICT busca R:R alto
 
-    min_trades = 5 # ICT es muy selectivo
+    # ==============================
+    # Configuración de la optimización
+    # ==============================
+    MIN_TRADES_OPT = 5  # Mínimo de trades para considerar una configuración válida
+    MAX_COMBOS_OPT = 2000 # Máximo de combinaciones a probar (para limitar el tiempo)
 
     param_grid = _build_param_grid(
         kill_zones=kill_zones,
@@ -172,7 +180,7 @@ def main():
         allow_shorts=allow_shorts,
         sl_pcts=sl_pcts,
         tp_rrs=tp_rrs,
-        min_trades=min_trades,
+        min_trades=MIN_TRADES,
     )
 
     total_full = len(param_grid)
@@ -214,11 +222,11 @@ def main():
     ).reset_index(drop=True)
 
     top_n = 20
-    print(f"\nTop {top_n} ICT {symbol} {timeframe}:")
+    print(f"\nTop {top_n} ICT {SYMBOL} {TIMEFRAME}:")
     print(df_results.head(top_n))
 
-    safe_symbol = symbol.replace("/", "")
-    out_path = f"opt_ict_{safe_symbol}_{timeframe}.csv"
+    safe_symbol = SYMBOL.replace("/", "")
+    out_path = f"opt_ict_{safe_symbol}_{TIMEFRAME}.csv"
     df_results.to_csv(out_path, index=False)
     print(f"\nResultados guardados en {out_path}")
 
