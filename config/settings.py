@@ -13,6 +13,7 @@ from strategies.squeeze_momentum_strategy import SqueezeMomentumConfig
 from strategies.archived.bb_trend_strategy import BBTrendStrategyConfig
 from strategies.smart_money_strategy import SmartMoneyStrategyConfig
 from strategies.ict_strategy import ICTStrategyConfig
+from strategies.ai_strategy import AIStrategyConfig
 
 from utils.risk import RiskManagementConfig
 
@@ -371,6 +372,38 @@ ICT_BTC15M_RUN = StrategyRunConfig(
 
 
 # ==========================
+# Estrategia 10: AI Random Forest (BTC/USDT 15m)
+# ==========================
+
+AI_RF_BTC15M_CONFIG = AIStrategyConfig(
+    lookback_window=14,
+    training_size_pct=0.7,
+    prediction_threshold=0.55,
+    learning_rate=0.1,
+    max_iter=100,
+    max_depth=20,
+)
+
+AI_RF_BTC15M_BT_CONFIG = BacktestConfig(
+    initial_capital=1000.0,
+    sl_pct=0.02,
+    tp_rr=2.0,
+    fee_pct=0.0005,
+    allow_short=True,
+)
+
+AI_RF_BTC15M_RUN = StrategyRunConfig(
+    name="AI_RF_OPT_BTCUSDT_15m",
+    symbol="BTC/USDT",
+    timeframe="15m",
+    limit_candles=50000,
+    strategy_type="AI_RF",
+    strategy_config=AI_RF_BTC15M_CONFIG,
+    backtest_config=AI_RF_BTC15M_BT_CONFIG,
+)
+
+
+# ==========================
 # Registro de estrategias optimizadas
 # (usado por backtest_strategies.py)
 # ==========================
@@ -385,6 +418,7 @@ OPTIMIZED_STRATEGIES = [
     BB_TREND_XRP15M_RUN,
     SMART_MONEY_BTC15M_RUN,
     ICT_BTC15M_RUN,
+    AI_RF_BTC15M_RUN,
 ]
 
 

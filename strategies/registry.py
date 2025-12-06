@@ -38,6 +38,10 @@ from strategies.ict_strategy import (
     ICTStrategy,
     ICTStrategyConfig,
 )
+from strategies.ai_strategy import (
+    AIStrategy,
+    AIStrategyConfig,
+)
 
 # Mapa: tipo_de_estrategia -> (ClaseEstrategia, ClaseConfig)
 # Los strings deben coincidir con los strategy_type que usas en config/settings.py
@@ -51,6 +55,7 @@ STRATEGY_REGISTRY: Dict[str, Tuple[Type[BaseStrategy], Type]] = {
     "BOLLINGER_MR": (BollingerMeanReversionStrategy, BollingerMeanReversionStrategyConfig),
     "SMART_MONEY": (SmartMoneyStrategy, SmartMoneyStrategyConfig),
     "ICT": (ICTStrategy, ICTStrategyConfig),
+    "AI_RF": (AIStrategy, AIStrategyConfig),
 }
 
 

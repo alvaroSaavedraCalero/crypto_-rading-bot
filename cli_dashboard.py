@@ -87,7 +87,30 @@ def run_backtest_flow():
         
         end_dt = datetime.now(timezone.utc)
         start_dt = end_dt - timedelta(days=days_back)
-        limit = 2000 
+        
+        # Calculate limit based on timeframe and days_back
+        # Approximate candles per day
+        candles_per_day = {
+            "1m": 1440,
+            "5m": 288,
+            "15m": 96,
+            "1h": 24,
+            "4h": 6,
+            "1d": 1,
+        }
+        
+        daily_candles = candles_per_day.get(timeframe, 24) # Default to 24 if unknown
+        # Add buffer
+        limit = int(days_back * daily_candles * 1.1) 
+        
+        # Ensure minimum limit for AI strategies (e.g. 50k if possible, or just large enough)
+        # But we don't want to download too much if not needed.
+        # If user asks for 30 days of 1m data: 30 * 1440 = 43200 candles.
+        # If user asks for 30000 days... that's too much.
+        
+        # Max limit safety
+        limit = min(limit, 200000) # Cap at 200k to avoid issues
+ 
         
         try:
             df = get_datos_cripto_cached(

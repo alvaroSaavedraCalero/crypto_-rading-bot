@@ -111,7 +111,6 @@ if st.sidebar.button("▶️ Run Backtest", type="primary"):
             
             # Ensure UTC
             if df['timestamp'].dt.tz is None:
-                df['timestamp'] = df['timestamp'].dt.tz_localize('UTC')
             
             # Filter Date Range
             mask = (df['timestamp'] >= start_dt) & (df['timestamp'] <= end_dt)

@@ -37,3 +37,4 @@ urllib3==2.5.0
 yarl==1.22.0
 rich
 questionary
+scikit-learn
